@@ -28,6 +28,19 @@ FEATURE_MAP = {
     "NumberOfDependents": "Dependents",
 }
 
+REASON_CODE_TEMPLATES = {
+    "RevolvingUtilizationOfUnsecuredLines": "Revolving credit utilisation ratio (reported: {value}) was a significant contributor to the risk assessment.",
+    "age": "Applicant age (reported: {value}) was a significant contributor to the risk assessment.",
+    "NumberOfTime30-59DaysPastDueNotWorse": "History of payments 30-59 days past due (reported: {value} occurrences) was a significant contributor to the risk assessment.",
+    "DebtRatio": "Debt-to-income ratio (reported: {value}) was a significant contributor to the risk assessment.",
+    "MonthlyIncome": "Monthly income level (reported: {value}) was a significant contributor to the risk assessment.",
+    "NumberOfOpenCreditLinesAndLoans": "Number of open credit lines and loans (reported: {value}) was a significant contributor to the risk assessment.",
+    "NumberOfTimes90DaysLate": "History of payments 90+ days late (reported: {value} occurrences) was a significant contributor to the risk assessment.",
+    "NumberRealEstateLoansOrLines": "Number of real estate loans or lines (reported: {value}) was a significant contributor to the risk assessment.",
+    "NumberOfTime60-89DaysPastDueNotWorse": "History of payments 60-89 days past due (reported: {value} occurrences) was a significant contributor to the risk assessment.",
+    "NumberOfDependents": "Number of dependents (reported: {value}) was a significant contributor to the risk assessment.",
+}
+
 # Cost assumption for cost-sensitive decisioning (see notebooks/04_threshold_optimization.ipynb)
 COST_FN = 5.0
 COST_FP = 1.0
@@ -129,6 +142,8 @@ def explain_prediction(data: dict):
         "NumberOfTime60_89DaysPastDueNotWorse"
     )
 
+    original_data = dict(data)
+
     X = pd.DataFrame([data])[FEATURE_ORDER]
 
     shap_values = xgb_explainer.shap_values(X)
@@ -153,7 +168,36 @@ def explain_prediction(data: dict):
     if isinstance(base_value, np.ndarray):
         base_value = float(base_value[0])
 
+    reason_codes = generate_reason_codes(drivers, original_data)
+
     return {
         "base_value": round(float(base_value), 4),
         "drivers": drivers,
+        "reason_codes": reason_codes,
     }
+
+
+def generate_reason_codes(drivers, borrower_data, top_n=4):
+    """
+    Convert top SHAP drivers into human-readable lending reason codes.
+    Only considers features with positive SHAP (i.e. pushing risk upward).
+    """
+    risk_increasing = [d for d in drivers if d["shap"] > 0]
+    top_drivers = risk_increasing[:top_n]
+
+    reason_codes = []
+    for driver in top_drivers:
+        feature_key = next(
+            (k for k, v in FEATURE_MAP.items() if v == driver["feature"]),
+            None
+        )
+        if feature_key and feature_key in REASON_CODE_TEMPLATES:
+            value = borrower_data.get(feature_key, "N/A")
+            reason_text = REASON_CODE_TEMPLATES[feature_key].format(value=value)
+            reason_codes.append({
+                "feature": driver["feature"],
+                "shap_value": driver["shap"],
+                "reason": reason_text,
+            })
+
+    return reason_codes
