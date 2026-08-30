@@ -13,3 +13,7 @@ frontend/.next/
 # OS
 .DS_Store
 Thumbs.db
+.ipynb_checkpoints/
+.venv/
+__pycache__/
+*.pyc
