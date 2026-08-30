@@ -536,13 +536,7 @@ https://creditiq-backend-w3cv.onrender.com/docs
 
 ---
 
-# About the Author
 
-**Khushi Kumari**
-
-GitHub:
-
-https://github.com/Khushi-Kumari030
 
 ---
 
