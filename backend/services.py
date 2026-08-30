@@ -36,6 +36,11 @@ COST_FP = 1.0
 xgb_model = joblib.load(MODELS_DIR / config["xgboost_model"])
 xgb_explainer = shap.TreeExplainer(xgb_model)
 
+# Calibrated model - used only for probability/expected-loss in the CalibratedCostOptimized
+# strategy. SHAP explainability continues to use the original xgb_model above, since
+# CalibratedClassifierCV wraps the model in a way TreeExplainer can't interpret directly.
+xgb_model_calibrated = joblib.load(MODELS_DIR / config["xgboost_calibrated_model"])
+
 logistic_models = {
     name: joblib.load(MODELS_DIR / path)
     for name, path in config["logistic_models"].items()
@@ -65,7 +70,10 @@ def predict_risk(data: dict):
 
     # Select model
     if model_name == "XGBoost":
-        model = xgb_model
+        if strategy == "CalibratedCostOptimized":
+            model = xgb_model_calibrated
+        else:
+            model = xgb_model
         prob = model.predict_proba(X)[0][1]
 
     else:
