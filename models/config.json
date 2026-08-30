@@ -9,7 +9,8 @@
     "thresholds":  {
                        "Lead":  0.5,
                        "Balanced":  0.6,
-                       "CostOptimized":  0.72
+                       "CostOptimized":  0.72,
+                       "CalibratedCostOptimized":  0.12
                    },
     "feature_order":  [
                           "RevolvingUtilizationOfUnsecuredLines",
@@ -22,5 +23,6 @@
                           "NumberRealEstateLoansOrLines",
                           "NumberOfTime60-89DaysPastDueNotWorse",
                           "NumberOfDependents"
-                      ]
+                      ],
+    "xgboost_calibrated_model":  "xgboost_calibrated.pkl"
 }
