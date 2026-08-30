@@ -28,6 +28,10 @@ FEATURE_MAP = {
     "NumberOfDependents": "Dependents",
 }
 
+# Cost assumption for cost-sensitive decisioning (see notebooks/04_threshold_optimization.ipynb)
+COST_FN = 5.0
+COST_FP = 1.0
+
 # Load models
 xgb_model = joblib.load(MODELS_DIR / config["xgboost_model"])
 xgb_explainer = shap.TreeExplainer(xgb_model)
@@ -85,6 +89,11 @@ def predict_risk(data: dict):
 
     decision = "Reject" if prediction == 1 else "Approve"
 
+    if decision == "Approve":
+        expected_loss_note = round(prob * COST_FN, 3)
+    else:
+        expected_loss_note = round((1 - prob) * COST_FP, 3)
+
     return {
         "probability": round(float(prob), 3),
         "prediction": prediction,
@@ -93,6 +102,8 @@ def predict_risk(data: dict):
         "decision": decision,
         "model": model_name,
         "strategy": strategy,
+        "expected_loss_estimate": expected_loss_note,
+        "cost_assumption": {"cost_fn": COST_FN, "cost_fp": COST_FP},
     }
 def explain_prediction(data: dict):
     """
