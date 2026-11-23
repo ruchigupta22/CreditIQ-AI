@@ -388,7 +388,7 @@ The goal is to augment analyst judgment rather than replace it.
 ## Clone Repository
 
 ```bash
-git clone https://github.com/Khushi-Kumari030/CreditIQ-AI.git
+git clone https://github.com/ruchigupta22/CreditIQ-AI.git
 
 cd CreditIQ-AI
 ```
